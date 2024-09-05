@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT-like Interface</title>
+    <link rel="stylesheet" href="D:\ai model\static">
+    
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-image: url('/static/background.jpg');
+    background-size: cover; /* Cover the entire background */
+    background-position: center; /* Center the background image */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0));
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(10px);
+    width: 100%;
+   
+    max-width: 900px;
+    border: 2px solid rgba(255,255,255,0.5);
+    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.37); */
+    box-shadow: -15px 17px 17px rgba(20,10,10,0.25);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.navbar {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0));
+    backdrop-filter: blur(10px);
+   
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.logo {
+    width: 140px; /* Adjust the width as needed */
+    height: auto;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+
+
+
+.chatbox {
+    height: 500px;
+    padding: 20px;
+    
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat {
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.outgoing {
+     align-self: flex-end;
+    background-color: #7209b7; 
+   
+    backdrop-filter: blur(15px);
+    color: #f1f1f1;
+}
+
+.incoming {
+    align-self: flex-start;
+    background-color: #b5179e;
+    color:white
+}
+
+.chat-input {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    align-items: center;
+}
+
+.chat-input textarea {
+    background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0));
+    backdrop-filter: blur(25px);
+    flex: 1;
+    height: 40px;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    resize: none;
+    color: black;
+
+}
+
+.chat-input button,
+.chat-input select {
+    margin-left: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    background-color: #7209b7;
+    color: white;
+    cursor: pointer;
+}
+
+.chat-input button.record {
+    background-color: #7209b7;
+}
+
+
+
+
+
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="navbar">
+            <img src="/static/Screenshot_2024-06-30_015939-removebg-preview.png" alt="Logo" class="logo"></div>
+        <div class="chatbox" id="chatbox"></div>
+        <div class="chat-input">
+            <textarea id="chatInput" placeholder="Type a message..."></textarea>
+            <button class="send" id="sendBtn">Send</button>
+            <button class="record" id="recordBtn">🎤</button>
+            
+            
+        </div>
+    </div>
+    
+
+
+
+    <script>
+       document.addEventListener('DOMContentLoaded', function () {
+    const sendBtn = document.getElementById('sendBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const translateBtn = document.getElementById('translateBtn');
+    const chatInput = document.getElementById('chatInput');
+    const chatbox = document.getElementById('chatbox');
+    const languageSelect = document.getElementById('languageSelect');
+
+    sendBtn.addEventListener('click', async function () {
+        const message = chatInput.value.trim();
+        if (message) {
+            displayOutgoingMessage(message);
+            chatInput.value = '';
+            const responseMessage = await sendMessage(message);
+            displayIncomingMessage(responseMessage);
+        }
+    });
+
+    recordBtn.addEventListener('click', function () {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.start();
+
+        recognition.onresult = async (event) => {
+            const transcript = event.results[0][0].transcript;
+            displayOutgoingMessage(transcript);
+            chatInput.value = '';
+            const responseMessage = await sendMessage(transcript);
+            displayIncomingMessage(responseMessage);
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error', event);
+        };
+    });
+
+    
+
+    async function sendMessage(message) {
+        try {
+            const response = await fetch('http://localhost:5000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+            return data.response;
+        } catch (error) {
+            console.error('Error:', error);
+            return 'Sorry, something went wrong.';
+        }
+    }
+
+    
+    
+
+    function displayOutgoingMessage(message) {
+        const outgoing = document.createElement('div');
+        outgoing.classList.add('chat', 'outgoing');
+        outgoing.innerHTML = `<p>${message}</p>`;
+        chatbox.appendChild(outgoing);
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    function displayIncomingMessage(message) {
+        const incoming = document.createElement('div');
+        incoming.classList.add('chat', 'incoming');
+        incoming.innerHTML = `<p>${message}</p>`;
+        chatbox.appendChild(incoming);
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+});
+
+    </script>
+</body>
+</html>
